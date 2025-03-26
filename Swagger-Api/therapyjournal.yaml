@@ -1,0 +1,778 @@
+openapi: 3.0.0
+info:
+  title: Therapy & Emotions Journal API
+  version: 1.0.0
+  description: >
+    This API supports a platform for clients to record their emotions journal and
+    manage interactions with therapists, including mapping, messaging, session management,
+    and note taking. It defines CRUDL operations for core resources such as clients, therapists,
+    sessions, journals, journal entries, mappings, and messages.
+servers:
+  - url: https://api.therapyjournal.com/v1
+
+paths:
+  # ---------------------------
+  # Client Endpoints
+  # ---------------------------
+  /clients:
+    get:
+      summary: List Clients
+      responses:
+        '200':
+          description: A list of clients.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+    post:
+      summary: Create a new Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '201':
+          description: Client created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+
+  /clients/{clientId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: Get a specific Client
+      responses:
+        '200':
+          description: Client details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    put:
+      summary: Update a Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Client updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    delete:
+      summary: Delete a Client
+      responses:
+        '204':
+          description: Client deleted.
+
+  # Mapping Client to Therapist and managing access
+  /clients/{clientId}/therapists:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: List mapped therapists for a client
+      responses:
+        '200':
+          description: List of therapists related to the client.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Therapist'
+    post:
+      summary: Map a therapist to a client
+      description: >
+        Map a therapist to the client’s account. This can be used to send a mapping
+        request or to directly add a therapist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                therapistId:
+                  type: string
+      responses:
+        '201':
+          description: Therapist mapped to client.
+
+  /clients/{clientId}/therapists/{therapistId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    delete:
+      summary: Remove a therapist mapping or revoke journal access
+      description: >
+        Delete the mapping between the client and therapist. Optionally, this endpoint
+        can be extended to only revoke journal access while keeping the mapping.
+      responses:
+        '204':
+          description: Mapping (or journal access) removed.
+
+  # Client Journal and Journal Entries
+  /clients/{clientId}/journal:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: Get Client Journal
+      description: Retrieve the entire emotions journal of the client.
+      responses:
+        '200':
+          description: Client journal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+
+  /clients/{clientId}/journal/entries:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: List Journal Entries
+      responses:
+        '200':
+          description: List of journal entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JournalEntry'
+    post:
+      summary: Add a Journal Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntry'
+      responses:
+        '201':
+          description: Journal entry created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+
+  /clients/{clientId}/journal/entries/{entryId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: entryId
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get a specific Journal Entry
+      responses:
+        '200':
+          description: Journal entry details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+    put:
+      summary: Update a Journal Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntry'
+      responses:
+        '200':
+          description: Journal entry updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+    delete:
+      summary: Delete a Journal Entry
+      responses:
+        '204':
+          description: Journal entry deleted.
+
+  # Client messaging endpoint
+  /clients/{clientId}/messages:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: Get message history for a client
+      responses:
+        '200':
+          description: Message history.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      summary: Send a message from client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+      responses:
+        '201':
+          description: Message sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  # Endpoint for appointment requests & session applications
+  /clients/{clientId}/appointments:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    post:
+      summary: Request an appointment/session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                requestedTime:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Appointment request submitted.
+
+  # ---------------------------
+  # Therapist Endpoints
+  # ---------------------------
+  /therapists:
+    get:
+      summary: List Therapists
+      responses:
+        '200':
+          description: A list of therapists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Therapist'
+    post:
+      summary: Create a new Therapist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Therapist'
+      responses:
+        '201':
+          description: Therapist created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+
+  /therapists/{therapistId}:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: Get a specific Therapist
+      responses:
+        '200':
+          description: Therapist details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+    put:
+      summary: Update a Therapist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Therapist'
+      responses:
+        '200':
+          description: Therapist updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+    delete:
+      summary: Delete a Therapist
+      responses:
+        '204':
+          description: Therapist deleted.
+
+  # Managing Clients (mapped to a therapist)
+  /therapists/{therapistId}/clients:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: List clients mapped to a therapist
+      responses:
+        '200':
+          description: List of clients.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+    post:
+      summary: Request a new client mapping or journal access
+      description: >
+        Create a mapping request for a client. By default, journal access is off.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                clientId:
+                  type: string
+                requestType:
+                  type: string
+                  enum: [mapping, journalAccess]
+      responses:
+        '201':
+          description: Mapping or access request created.
+
+  /therapists/{therapistId}/clients/{clientId}:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Remove a client mapping
+      description: >
+        Remove the mapping of a client from the therapist. Journal access will be automatically turned off.
+      responses:
+        '204':
+          description: Client mapping removed.
+
+  # Therapist messaging endpoint
+  /therapists/{therapistId}/messages:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: Get message history for a therapist
+      responses:
+        '200':
+          description: Message history.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      summary: Send a message from therapist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+      responses:
+        '201':
+          description: Message sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  # Therapist Session management
+  /therapists/{therapistId}/sessions:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: List sessions created by the therapist
+      responses:
+        '200':
+          description: List of sessions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+    post:
+      summary: Create a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+      responses:
+        '201':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+
+  /therapists/{therapistId}/sessions/{sessionId}:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get session details
+      responses:
+        '200':
+          description: Session details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+    put:
+      summary: Update session details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+      responses:
+        '200':
+          description: Session updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+    delete:
+      summary: Delete a session
+      responses:
+        '204':
+          description: Session deleted.
+
+  # Session Notes (Private & Shared)
+  /therapists/{therapistId}/sessions/{sessionId}/notes:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get notes for a session
+      description: >
+        Retrieve both private and shared notes for a session.
+      responses:
+        '200':
+          description: Session notes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  privateNotes:
+                    type: string
+                  sharedNotes:
+                    type: string
+    post:
+      summary: Add or update session notes
+      description: >
+        Create or update notes for the session. The payload should specify if the note is private or shared.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                noteType:
+                  type: string
+                  enum: [private, shared]
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Session notes updated.
+
+  # ---------------------------
+  # Global Search Endpoints
+  # ---------------------------
+  /search:
+    get:
+      summary: Global Keyword Search
+      description: >
+        Search across therapists’ notes, client journals, and emotions entries using keywords.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: The search keyword.
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clients:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+                  therapists:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Therapist'
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  journalEntries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JournalEntry'
+
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - id
+        - email
+        - password
+      properties:
+        id:
+          type: string
+          example: "client123"
+        email:
+          type: string
+          format: email
+          example: "client@example.com"
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+          example: "John Doe"
+        createdAt:
+          type: string
+          format: date-time
+    Therapist:
+      type: object
+      required:
+        - id
+        - email
+        - password
+      properties:
+        id:
+          type: string
+          example: "therapist123"
+        email:
+          type: string
+          format: email
+          example: "therapist@example.com"
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+          example: "Dr. Smith"
+        specialization:
+          type: string
+          example: "Clinical Psychology"
+        createdAt:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          example: "session123"
+        title:
+          type: string
+          example: "Anxiety Management"
+        description:
+          type: string
+        privateNotes:
+          type: string
+        sharedNotes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+    Journal:
+      type: object
+      properties:
+        clientId:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalEntry'
+    JournalEntry:
+      type: object
+      required:
+        - id
+        - timestamp
+        - feeling
+        - intensity
+      properties:
+        id:
+          type: string
+          example: "entry456"
+        timestamp:
+          type: string
+          format: date-time
+        feeling:
+          type: string
+          example: "anxious"
+        intensity:
+          type: number
+          description: "Intensity on a defined scale (e.g., 1-10)"
+          example: 7
+        description:
+          type: string
+          example: "Feeling anxious about upcoming events."
+    Message:
+      type: object
+      required:
+        - id
+        - senderId
+        - recipientId
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          example: "msg789"
+        senderId:
+          type: string
+        recipientId:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Mapping:
+      type: object
+      required:
+        - clientId
+        - therapistId
+        - journalAccess
+      properties:
+        clientId:
+          type: string
+        therapistId:
+          type: string
+        journalAccess:
+          type: boolean
+          description: "Indicates if the therapist has access to the client’s journal."

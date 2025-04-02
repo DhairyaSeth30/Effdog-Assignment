@@ -1,0 +1,984 @@
+openapi: 3.0.0
+info:
+  title: Therapy & Emotions Journal API
+  version: 1.0.0
+  description: >
+    This API supports a platform for clients to record their emotions journal and
+    manage interactions with therapists, including mapping, messaging, session management,
+    and note taking. It defines CRUDL operations for core resources such as clients, therapists,
+    sessions, journals, journal entries, mappings, and messages.
+servers:
+  - url: https://api.therapyjournal.com/v1
+
+paths:
+  
+  # ---------------------------
+  # Client and Therapist Login Endpoint
+  # ---------------------------
+  /login:
+    post:
+      summary: User Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - type
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                type:
+                  type: string
+                  enum: [client, therapist]
+      responses:
+        '201':
+          description: Login successful. Returns an authentication token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for authentication.
+                  user_id:
+                    type: string
+                  type:
+                    type: string
+                    enum: [client, therapist]
+        '401':
+          description: Unauthorized - invalid credentials.
+        '500':
+          description: Internal Server Error.
+          
+  # ---------------------------
+  # Client Endpoints
+  # ---------------------------
+  /clients:
+    get:
+      summary: List Clients
+      responses:
+        '200':
+          description: A list of clients.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad Request.
+        '500':
+          description: Internal Server Error.
+    post:
+      summary: Create a new Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Client created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+
+  /clients/{clientId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+    get:
+      summary: Get a specific Client
+      responses:
+        '200':
+          description: Client details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Client not found.
+        '500':
+          description: Internal Server Error.
+    put:
+      summary: Update a Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Client updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Invalid input.
+        '404':
+          description: Client not found.
+        '500':
+          description: Internal Server Error.
+    delete:
+      summary: Delete a Client
+      responses:
+        '204':
+          description: Client deleted.
+        '404':
+          description: Client not found.
+        '500':
+          description: Internal Server Error.
+
+  # ---------------------------
+  # Therapist Endpoints
+  # ---------------------------
+  /therapists:
+    get:
+      summary: List Therapists(We can implement pagination also)
+      responses:
+        '200':
+          description: A list of therapists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Therapist'
+        '400':
+          description: Bad Request.
+        '500':
+          description: Internal Server Error.
+    post:
+      summary: Create a new Therapist account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTherapistRequest'
+      responses:
+        '201':
+          description: Therapist created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+
+  /therapists/{therapistId}:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: Get a specific Therapist
+      responses:
+        '200':
+          description: Therapist details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+        '404':
+          description: Therapist not found.
+        '500':
+          description: Internal Server Error.
+    put:
+      summary: Update a Therapist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Therapist'
+      responses:
+        '200':
+          description: Therapist updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+        '400':
+          description: Invalid input.
+        '404':
+          description: Therapist not found.
+        '500':
+          description: Internal Server Error.
+    delete:
+      summary: Delete a Therapist
+      responses:
+        '204':
+          description: Therapist deleted.
+        '404':
+          description: Therapist not found.
+        '500':
+          description: Internal Server Error.
+
+  /therapists/{therapistId}/clients:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: List Clients mapped to a Therapist
+      description: >
+        Retrieve a list of clients who have been mapped to the therapist or have interacted with the therapist.
+      responses:
+        '200':
+          description: List of clients.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '404':
+          description: Therapist not found.
+        '500':
+          description: Internal Server Error.
+
+  /therapists/{therapistId}/journals:
+    parameters:
+      - in: path
+        name: therapistId
+        required: true
+        schema:
+          type: string
+        description: The therapist ID.
+    get:
+      summary: View Client Journals
+      description: >
+        Retrieve journals of clients associated with the therapist.
+      responses:
+        '200':
+          description: List of client journals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Journal'
+        '404':
+          description: Therapist or journals not found.
+        '500':
+          description: Internal Server Error.
+
+  # ---------------------------
+  # Mapping Endpoints
+  # ---------------------------
+  /mappings/{client_id}/{therapist_id}:
+    parameters:
+        - in: path
+          name: client_id
+          required: true
+          schema:
+            type: string
+          description: The client's ID
+        - in: path
+          name: therapist_id
+          required: true
+          schema:
+            type: string
+          description: The therapist's ID
+    get:
+      summary: Retrieve the mapping between a client and therapist
+      responses:
+        '200':
+          description: Mapping retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mapping_id:
+                    type: string
+        '404':
+          description: Mapping not found.
+        '500':
+          description: Internal Server Error.
+    
+    post:
+      summary: Create a new mapping between a client and therapist
+      description: >
+        Create a mapping entry. By default, journal access is off unless specified otherwise.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                journalAccess:
+                  type: boolean
+                  description: "Indicates if the therapist has access to the client’s journal."
+                  default: false
+      responses:
+        '201':
+          description: Mapping created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mapping_id:
+                    type: string
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+          
+    put:
+      summary: Update mapping details (e.g., modify journal access)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                journalAccess:
+                  type: boolean
+                  description: "Updated journal access flag."
+      responses:
+        '200':
+          description: Mapping updated successfully.
+        '400':
+          description: Invalid input.
+        '404':
+          description: Mapping not found.
+        '500':
+          description: Internal Server Error.
+          
+    delete:
+      summary: Remove a mapping between a client and a therapist
+      description: >
+        Remove the mapping between the client and therapist. This action also revokes any journal access.
+      responses:
+        '204':
+          description: Mapping removed.
+        '404':
+          description: Mapping not found.
+        '500':
+          description: Internal Server Error.
+
+  # ---------------------------
+  # Journal Endpoints
+  # ---------------------------
+  /journal/{clientId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID whose journal is being managed.
+    get:
+      summary: Get the entire journal of a client
+      description: Retrieve the complete emotions journal for the client.
+      responses:
+        '200':
+          description: Journal retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '404':
+          description: Journal not found.
+        '500':
+          description: Internal Server Error.
+    post:
+      summary: Add a new journal entry for a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timestamp:
+                  type: string
+                  format: date-time
+                feeling:
+                  type: string
+                  example: "anxious"
+                intensity:
+                  type: number
+                  description: "Intensity on a defined scale (e.g., 1-10)"
+                  example: 7
+                description:
+                  type: string
+                  example: "Feeling anxious about upcoming events."
+      responses:
+        '201':
+          description: Journal entry created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+
+  /journal/{clientId}/entries/{entryId}:
+    parameters:
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        description: The client ID.
+      - in: path
+        name: entryId
+        required: true
+        schema:
+          type: string
+        description: The journal entry ID.
+    get:
+      summary: Get a specific journal entry
+      responses:
+        '200':
+          description: Journal entry details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+        '404':
+          description: Journal entry not found.
+        '500':
+          description: Internal Server Error.
+    put:
+      summary: Update a specific journal entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntry'
+      responses:
+        '200':
+          description: Journal entry updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+        '400':
+          description: Invalid input.
+        '404':
+          description: Journal entry not found.
+        '500':
+          description: Internal Server Error.
+    delete:
+      summary: Delete a specific journal entry
+      responses:
+        '204':
+          description: Journal entry deleted.
+        '404':
+          description: Journal entry not found.
+        '500':
+          description: Internal Server Error.
+
+  # ---------------------------
+  # Message Endpoints
+  # ---------------------------
+  /message/{senderId}/{recipientId}:
+    parameters:
+      - in: path
+        name: senderId
+        required: true
+        schema:
+          type: string
+        description: ID of the sender.
+      - in: path
+        name: recipientId
+        required: true
+        schema:
+          type: string
+        description: ID of the recipient.
+    get:
+      summary: Get message history between sender and recipient
+      responses:
+        '200':
+          description: Message history retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '404':
+          description: Messages not found.
+        '500':
+          description: Internal Server Error.
+    post:
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+      responses:
+        '201':
+          description: Message sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+
+  # ---------------------------
+  # Session Endpoints
+  # ---------------------------
+  /sessions/{therapist_id}/view:
+    get:
+      summary: Retrieve available sessions for a therapist
+      parameters:
+        - in: path
+          name: therapist_id
+          required: true
+          schema:
+            type: string
+          description: The therapist's ID
+      responses:
+        '200':
+          description: List of available sessions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    session_id:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+                    start_time:
+                      type: string
+                      format: time
+                    end_time:
+                      type: string
+                      format: time
+                    status:
+                      type: string
+                      enum: [booked, not booked]
+        '404':
+          description: Therapist not found.
+        '500':
+          description: Internal Server Error.
+          
+  /sessions/{therapist_id}/create:
+    post:
+      summary: Create a new session for a therapist
+      parameters:
+        - in: path
+          name: therapist_id
+          required: true
+          schema:
+            type: string
+          description: The therapist's ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+      responses:
+        '201':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                  privateNotes:
+                    type: string
+                  sharedNotes:
+                    type: string
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal Server Error.
+          
+  /sessions/{session_id}/book:
+    post:
+      summary: Book a session for a client
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: The session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: string
+      responses:
+        '200':
+          description: Session booked successfully.
+        '400':
+          description: Session already booked or invalid request.
+        '404':
+          description: Session not found.
+        '500':
+          description: Internal Server Error.
+          
+  /sessions/{session_id}/action:
+    put:
+      summary: Accept or reject a client's request for booking a session
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: The session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [accept, reject]
+                client_id:
+                  type: string
+      responses:
+        '200':
+          description: Session accepted/rejected successfully.
+        '400':
+          description: Invalid action or request.
+        '404':
+          description: Session or client not found.
+        '500':
+          description: Internal Server Error.
+          
+  /sessions/{session_id}/update:
+    put:
+      summary: Modify session details
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: The session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+      responses:
+        '200':
+          description: Session updated successfully.
+        '400':
+          description: Invalid input.
+        '404':
+          description: Session not found.
+        '500':
+          description: Internal Server Error.
+          
+  /sessions/{session_id}/delete:
+    delete:
+      summary: Delete a session
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: The session ID
+      responses:
+        '200':
+          description: Session deleted successfully.
+        '404':
+          description: Session not found.
+        '500':
+          description: Internal Server Error.
+
+  # Global Search Endpoint
+  # ---------------------------
+  /search:
+    get:
+      summary: Global Keyword Search
+      description: >
+        Search across therapists’ notes, client journals, and emotions entries using keywords.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: The search keyword.
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clients:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+                  therapists:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Therapist'
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  journalEntries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JournalEntry'
+        '400':
+          description: Invalid search query.
+        '500':
+          description: Internal Server Error.
+
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "client123"
+        email:
+          type: string
+          format: email
+          example: "client@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateClientRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          example: "client@example.com"
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+          example: "John Doe"
+
+    Therapist:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "therapist123"
+        email:
+          type: string
+          format: email
+          example: "therapist@example.com"
+        name:
+          type: string
+          example: "Dr. Smith"
+        specialization:
+          type: string
+          example: "Clinical Psychology"
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTherapistRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          example: "therapist@example.com"
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+          example: "Dr. Smith"
+        specialization:
+          type: string
+          example: "Clinical Psychology"
+
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [booked, not booked]
+        privateNotes:
+          type: string
+        sharedNotes:
+          type: string
+    
+    SessionCreate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        privateNotes:
+          type: string
+        sharedNotes:
+          type: string
+
+    Journal:
+      type: object
+      properties:
+        clientId:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalEntry'
+
+    JournalEntry:
+      type: object
+      required:
+        - timestamp
+        - feeling
+        - intensity
+      properties:
+        id:
+          type: string
+          example: "entry456"
+        timestamp:
+          type: string
+          format: date-time
+        feeling:
+          type: string
+          example: "anxious"
+        intensity:
+          type: number
+          description: "Intensity on a defined scale (e.g., 1-10)"
+          example: 7
+        description:
+          type: string
+          example: "Feeling anxious about upcoming events."
+
+    Message:
+      type: object
+      required:
+        - id
+        - senderId
+        - recipientId
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          example: "msg789"
+        senderId:
+          type: string
+        recipientId:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Mapping:
+      type: object
+      required:
+        - clientId
+        - therapistId
+        - journalAccess
+      properties:
+        clientId:
+          type: string
+        therapistId:
+          type: string
+        journalAccess:
+          type: boolean
+          description: "Indicates if the therapist has access to the client’s journal."

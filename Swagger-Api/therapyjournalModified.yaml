@@ -149,6 +149,50 @@ paths:
           description: Client not found.
         '500':
           description: Internal Server Error.
+          
+  /clients/{client_id}/appointments:
+    get:
+      summary: List a client’s appointment requests and approved sessions
+      description: Retrieve a list of appointment requests and booked sessions for a client with session details including therapist information.
+      parameters:
+        - in: path
+          name: client_id
+          required: true
+          schema:
+            type: string
+          description: The client ID whose appointments are to be listed.
+      responses:
+        '200':
+          description: Appointments retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClientAppointment'
+              examples:
+                exampleResponse:
+                  value:
+                    - sessionId: "session123"
+                      date: "2023-03-01"
+                      startTime: "10:00:00"
+                      endTime: "11:00:00"
+                      status: "booked"
+                      therapistId: "therapist789"
+                      therapistName: "Dr. Smith"
+                      therapistSpecialization: "Clinical Psychology"
+                    - sessionId: "session456"
+                      date: "2023-03-08"
+                      startTime: "14:00:00"
+                      endTime: "15:00:00"
+                      status: "pending"
+                      therapistId: "therapist789"
+                      therapistName: "Dr. Smith"
+                      therapistSpecialization: "Clinical Psychology"
+        '404':
+          description: Client not found or no appointments available.
+        '500':
+          description: Internal Server Error.
 
   # ---------------------------
   # Therapist Endpoints
@@ -666,6 +710,38 @@ paths:
         '500':
           description: Internal Server Error.
           
+  /sessions/{session_id}/requests:
+    get:
+      summary: List appointment requests for a session
+      description: Retrieve a list of clients who have requested to book the session.
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: The session ID for which appointment requests are being retrieved.
+      responses:
+        '200':
+          description: List of appointment requests retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentRequest'
+              examples:
+                exampleResponse:
+                  value:
+                    - clientId: "client123"
+                      name: "Raj"
+                    - clientId: "client456"
+                      name: "Rahul"
+        '404':
+          description: Session not found or no appointment requests available.
+        '500':
+          description: Internal Server Error.
+          
   /sessions/{session_id}/action:
     put:
       summary: Accept or reject a client's request for booking a session
@@ -871,6 +947,60 @@ components:
           example: "Dr. Smith"
         specialization:
           type: string
+          example: "Clinical Psychology"
+          
+    AppointmentRequest:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: The ID of the client who sent the request.
+          example: "client123"
+        name:
+          type: string
+          description: The name of the client.
+          example: "Raj"
+          
+    ClientAppointment:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: The session ID.
+          example: "session123"
+        date:
+          type: string
+          format: date
+          description: The date of the session.
+          example: "2023-03-01"
+        startTime:
+          type: string
+          format: time
+          description: The starting time of the session.
+          example: "10:00:00"
+        endTime:
+          type: string
+          format: time
+          description: The ending time of the session.
+          example: "11:00:00"
+        status:
+          type: string
+          description: The status of the appointment request.
+          enum:
+            - pending
+            - booked
+          example: "booked"
+        therapistId:
+          type: string
+          description: The ID of the therapist associated with the session.
+          example: "therapist789"
+        therapistName:
+          type: string
+          description: The name of the therapist.
+          example: "Dr. Smith"
+        therapistSpecialization:
+          type: string
+          description: The therapist's field of specialization.
           example: "Clinical Psychology"
 
     Session:

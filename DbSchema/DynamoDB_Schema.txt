@@ -1,0 +1,147 @@
+
+Table 1: users
+Attributes:
+- id (String) [PK]
+- name (String)
+- email (String) [Unique]
+- password (String)
+- role (String) [Client | Therapist]
+
+GSI:
+- GSI1: email-index
+- Partition Key: email
+
+Table 2: client_therapist_mappings
+Attributes:
+- id (String) [PK]
+- client_id (String)
+- therapist_id (String)
+- has_journal_access (Boolean)
+- status (String) [Approved | Rejected]
+
+GSIs:
+- GSI1: client-index (Partition Key: client_id)
+- GSI2: therapist-index (Partition Key: therapist_id)
+
+Table 3: emotion_entries
+Attributes:
+- id (String) [PK]
+- client_id (String)
+- emotion (String)
+- intensity (Number)
+- time (String)
+
+GSI:
+- GSI1: client-time-index
+  - Partition Key: client_id
+  - Sort Key: time
+
+Table 4: messages
+Attributes:
+- id (String) [PK]
+- sender_id (String)
+- receiver_id (String)
+- content (String)
+- sent_at (String)
+
+GSIs:
+- GSI1: sender-index (Partition Key: sender_id, Sort Key: sent_at)
+- GSI2: receiver-index (Partition Key: receiver_id, Sort Key: sent_at)
+
+Table 5: sessions
+Attributes:
+- id (String) [PK]
+- therapist_id (String)
+- title (String)
+- scheduled_at (String)
+- duration_min (Number)
+
+GSI:
+- GSI1: therapist-schedule-index (Partition Key: therapist_id, Sort Key: scheduled_at)
+
+Table 6: session_notes
+Attributes:
+- id (String) [PK]
+- session_id (String)
+- is_shared (Boolean)
+- content (String)
+
+GSI:
+- GSI1: session-index (Partition Key: session_id)
+
+Table 7: session_clients
+Attributes:
+- id (String) [PK]
+- session_id (String)
+- client_id (String)
+- status (String) [Requested | Confirmed | Cancelled]
+
+GSIs:
+- GSI1: session-client-index (Partition Key: session_id, Sort Key: client_id)
+- GSI2: client-status-index (Partition Key: client_id, Sort Key: status)
+
+
+
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+Tables:-
+
+Table users {
+  id integer [pk]
+  name varchar
+  email varchar [unique]
+  password varchar
+  role varchar // "Client" or "Therapist"
+}
+
+Table client_therapist_mappings {
+  id integer [pk]
+  client_id integer [ref: > users.id]
+  therapist_id integer [ref: > users.id]
+  has_journal_access boolean
+  status varchar // "Approved" or "Rejected"
+}
+
+Table emotion_entries {
+  id integer [pk]
+  client_id integer [ref: > users.id]
+  emotion varchar
+  intensity int
+  time timestamp
+}
+
+Table messages {
+  id integer [pk]
+  sender_id integer [ref: > users.id]
+  receiver_id integer [ref: > users.id]
+  content text
+  sent_at timestamp
+}
+
+Table sessions {
+  id integer [pk]
+  therapist_id integer [ref: > users.id]
+  title varchar
+  scheduled_at timestamp
+  duration_min int
+}
+
+Table session_notes {
+  id integer [pk]
+  session_id integer [ref: > sessions.id]
+  is_shared boolean
+  content text
+}
+
+Table session_clients {
+  id integer [pk]
+  session_id integer [ref: > sessions.id]
+  client_id integer [ref: > users.id]
+  status varchar // "Requested" or "Confirmed" or "Cancelled"
+}
+
+

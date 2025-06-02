@@ -1,0 +1,88 @@
+Table 1: users
+
+Attributes:
+- id (PK)
+- name
+- email [Unique]
+- password
+- role [Client | Therapist]
+- specialization [for therapists]
+- location [for therapists]
+
+GSI1: email-index
+  - PK: email
+
+GSI2: therapist-specialization-index
+  - PK: specialization
+  - SK: location
+
+
+Table 2: client_therapist_mappings
+
+Attributes:
+- id (PK)
+- client_id
+- therapist_id
+- has_journal_access
+- status [Approved | Rejected]
+
+GSI1: client-therapist-index
+  - PK: client_id
+  - SK: therapist_id
+
+
+Table 3: emotion_entries
+
+Attributes:
+- id (PK)
+- client_id
+- emotion
+- intensity
+- time
+
+GSI1: client-time-index
+  - PK: client_id
+  - SK: time
+
+
+Table 4: messages
+
+Attributes:
+  - id (String) [PK]
+  - sender_id (String)
+  - receiver_id (String)
+  - content (String)
+  - sent_at (String)  
+  - sender_receiver_sent_at (String)     # sender_id#receiver_id#sent_at
+  - receiver_sender_sent_at (String)     # receiver_id#sender_id#sent_at
+
+GSI1: sender_receiver_index
+  -  Partition Key: sender_id
+  -  Sort Key: sender_receiver_sent_at
+
+GSI2: receiver_index
+  -  Partition Key: receiver_id
+  -  Sort Key: receiver_sender_sent_at
+
+
+
+Table 5: sessions
+
+Attributes:
+- id (PK)
+- therapist_id
+- client_id
+- title
+- scheduled_at
+- duration_min
+- status [Requested | Confirmed | Cancelled]
+- is_shared
+- content [optional note]
+
+GSI1: therapist_schedule_index
+  - PK: therapist_id
+  - SK: scheduled_at
+
+GSI2: client_status_index
+  - PK: client_id
+  - SK: status-scheduled_at
